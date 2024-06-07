@@ -121,7 +121,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "greenlet"
-version = "0.4.17"
+version = "3.0.3"
 description = "Lightweight in-process concurrent programming"
 category = "dev"
 optional = false
