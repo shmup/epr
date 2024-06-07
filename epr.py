@@ -1173,7 +1173,9 @@ def main():
     if len({"-h", "--help"} & set(args)) != 0:
         hlp = __doc__.rstrip()
         if "-h" in args:
-            hlp = re.search("(\n|.)*(?=\n\nKey)", hlp).group()
+            match = re.search("(\n|.)*(?=\n\nKey)", hlp)
+            if match:
+                hlp = match.group()
         print(hlp)
         sys.exit()
 
