@@ -40,13 +40,11 @@ Key Binding:
     Switch colorsch  : [default=0, dark=1, light=2]c
 """
 
-
 __version__ = "2.4.15"
 __license__ = "MIT"
 __author__ = "Benawi Adha"
 __email__ = "benawiadha@gmail.com"
 __url__ = "https://github.com/wustho/epr"
-
 
 import curses
 import zipfile
@@ -63,7 +61,6 @@ from urllib.parse import unquote
 from html import unescape
 from html.parser import HTMLParser
 from difflib import SequenceMatcher as SM
-
 
 # key bindings
 SCROLL_DOWN = {curses.KEY_DOWN}
@@ -90,13 +87,11 @@ MARKPOS = ord("b")
 JUMPTOPOS = ord("`")
 COLORSWITCH = ord("c")
 
-
 # colorscheme
 # DARK/LIGHT = (fg, bg)
 # -1 is default terminal fg/bg
 DARK = (252, 235)
 LIGHT = (239, 223)
-
 
 # some global envs, better leave these alone
 STATEFILE = ""
@@ -121,10 +116,8 @@ class Epub:
         self.path = os.path.abspath(fileepub)
         self.file = zipfile.ZipFile(fileepub, "r")
         cont = ET.parse(self.file.open("META-INF/container.xml"))
-        self.rootfile = cont.find(
-            "CONT:rootfiles/CONT:rootfile",
-            self.NS
-        ).attrib["full-path"]
+        self.rootfile = cont.find("CONT:rootfiles/CONT:rootfile",
+                                  self.NS).attrib["full-path"]
         self.rootdir = os.path.dirname(self.rootfile)\
             + "/" if os.path.dirname(self.rootfile) != "" else ""
         cont = ET.parse(self.file.open(self.rootfile))
@@ -164,10 +157,7 @@ class Epub:
             # if i.get("id") != "ncx" and i.get("properties") != "nav":
             if i.get("media-type") != "application/x-dtbncx+xml"\
                and i.get("properties") != "nav":
-                manifest.append([
-                    i.get("id"),
-                    i.get("href")
-                ])
+                manifest.append([i.get("id"), i.get("href")])
 
         spine, contents = [], []
         for i in cont.findall("OPF:spine/*", self.NS):
@@ -175,7 +165,7 @@ class Epub:
         for i in spine:
             for j in manifest:
                 if i == j[0]:
-                    self.contents.append(self.rootdir+unquote(j[1]))
+                    self.contents.append(self.rootdir + unquote(j[1]))
                     contents.append(unquote(j[1]))
                     manifest.remove(j)
                     # TODO: test is break necessary
@@ -187,17 +177,20 @@ class Epub:
             navPoints = toc.findall("DAISY:navMap//DAISY:navPoint", self.NS)
         elif self.version == "3.0":
             navPoints = toc.findall(
-                "XHTML:body//XHTML:nav[@EPUB:type='toc']//XHTML:a",
-                self.NS
-            )
+                "XHTML:body//XHTML:nav[@EPUB:type='toc']//XHTML:a", self.NS)
         for i in contents:
             name = "-"
             for j in navPoints:
                 # EPUB3
                 if self.version == "2.0":
                     # if i == unquote(j.find("DAISY:content", self.NS).get("src")):
-                    if re.search(i, unquote(j.find("DAISY:content", self.NS).get("src"))) is not None:
-                        name = j.find("DAISY:navLabel/DAISY:text", self.NS).text
+                    if re.search(
+                            i,
+                            unquote(
+                                j.find("DAISY:content",
+                                       self.NS).get("src"))) is not None:
+                        name = j.find("DAISY:navLabel/DAISY:text",
+                                      self.NS).text
                         break
                 elif self.version == "3.0":
                     # if i == unquote(j.get("href")):
@@ -213,6 +206,7 @@ class HTMLtoLines(HTMLParser):
     pref = {"pre"}
     bull = {"li"}
     hide = {"script", "style", "head"}
+
     # hide = {"script", "style", "head", ", "sub}
 
     def __init__(self):
@@ -303,13 +297,13 @@ class HTMLtoLines(HTMLParser):
                 line = unescape(re.sub(r"\s+", " ", tmp))
             self.text[-1] += line
             if self.ishead:
-                self.idhead.add(len(self.text)-1)
+                self.idhead.add(len(self.text) - 1)
             elif self.isbull:
-                self.idbull.add(len(self.text)-1)
+                self.idbull.add(len(self.text) - 1)
             elif self.isinde:
-                self.idinde.add(len(self.text)-1)
+                self.idinde.add(len(self.text) - 1)
             elif self.ispref:
-                self.idpref.add(len(self.text)-1)
+                self.idpref.add(len(self.text) - 1)
 
     def get_lines(self, width=0):
         text = []
@@ -317,18 +311,19 @@ class HTMLtoLines(HTMLParser):
             return self.text
         for n, i in enumerate(self.text):
             if n in self.idhead:
-                text += [i.rjust(width//2 + len(i)//2)] + [""]
+                text += [i.rjust(width // 2 + len(i) // 2)] + [""]
             elif n in self.idinde:
-                text += ["   "+j for j in textwrap.wrap(i, width - 3)] + [""]
+                text += ["   " + j for j in textwrap.wrap(i, width - 3)] + [""]
             elif n in self.idbull:
                 tmp = textwrap.wrap(i, width - 3)
-                text += [" - "+j if j == tmp[0] else "   "+j for j in tmp] + [""]
+                text += [" - " + j if j == tmp[0] else "   " + j
+                         for j in tmp] + [""]
             elif n in self.idpref:
                 tmp = i.splitlines()
                 wraptmp = []
                 for line in tmp:
                     wraptmp += [j for j in textwrap.wrap(line, width - 6)]
-                text += ["   "+j for j in wraptmp] + [""]
+                text += ["   " + j for j in wraptmp] + [""]
             else:
                 text += textwrap.wrap(i, width) + [""]
         return text, self.imgs
@@ -356,7 +351,7 @@ def loadstate():
             STATE = json.load(f)
 
 
-def savestate(file, index, width, pos, pctg ):
+def savestate(file, index, width, pos, pctg):
     for i in STATE:
         STATE[i]["lastread"] = str(0)
     STATE[file]["lastread"] = str(1)
@@ -375,7 +370,7 @@ def pgup(pos, winhi, preservedline=0, c=1):
         return 0
 
 
-def pgdn(pos, tot, winhi, preservedline=0,c=1):
+def pgdn(pos, tot, winhi, preservedline=0, c=1):
     if pos + (winhi * c) <= tot - winhi:
         return pos + (winhi * c)
     else:
@@ -403,13 +398,13 @@ def toc(stdscr, src, index):
 
     toc.box()
     toc.keypad(True)
-    toc.addstr(1,2, "Table of Contents")
-    toc.addstr(2,2, "-----------------")
+    toc.addstr(1, 2, "Table of Contents")
+    toc.addstr(2, 2, "-----------------")
     key_toc = 0
 
     totlines = len(src)
     toc.refresh()
-    pad = curses.newpad(totlines, wi - 2 )
+    pad = curses.newpad(totlines, wi - 2)
     if COLORSUPPORT:
         pad.bkgd(stdscr.getbkgd())
 
@@ -417,32 +412,32 @@ def toc(stdscr, src, index):
 
     padhi = rows - 5 - Y - 4 + 1
     y = 0
-    if index in range(padhi//2, totlines - padhi//2):
-        y = index - padhi//2 + 1
+    if index in range(padhi // 2, totlines - padhi // 2):
+        y = index - padhi // 2 + 1
     d = len(str(totlines))
     span = []
 
     for n, i in enumerate(src):
         # strs = "  " + str(n+1).rjust(d) + " " + i[0]
         strs = "  " + i
-        strs = strs[0:wi-3]
+        strs = strs[0:wi - 3]
         pad.addstr(n, 0, strs)
         span.append(len(strs))
 
     countstring = ""
-    while key_toc not in TOC|QUIT:
+    while key_toc not in TOC | QUIT:
         if countstring == "":
             count = 1
         else:
             count = int(countstring)
-        if key_toc in range(48, 58): # i.e., k is a numeral
+        if key_toc in range(48, 58):  # i.e., k is a numeral
             countstring = countstring + chr(key_toc)
         else:
-            if key_toc in SCROLL_UP|SCROLL_UP_K or key_toc in PAGE_UP:
+            if key_toc in SCROLL_UP | SCROLL_UP_K or key_toc in PAGE_UP:
                 index -= count
                 if index < 0:
                     index = 0
-            elif key_toc in SCROLL_DOWN|SCROLL_DOWN_J or key_toc in PAGE_DOWN:
+            elif key_toc in SCROLL_DOWN | SCROLL_DOWN_J or key_toc in PAGE_DOWN:
                 index += count
                 if index + 1 >= totlines:
                     index = totlines - 1
@@ -462,11 +457,11 @@ def toc(stdscr, src, index):
                 index = 0
             elif key_toc in CH_END:
                 index = totlines - 1
-            elif key_toc in {curses.KEY_RESIZE}|HELP|META:
+            elif key_toc in {curses.KEY_RESIZE} | HELP | META:
                 return key_toc
             countstring = ""
 
-        while index not in range(y, y+padhi):
+        while index not in range(y, y + padhi):
             if index < y:
                 y -= 1
             else:
@@ -478,7 +473,7 @@ def toc(stdscr, src, index):
             pad.addstr(n, 0, pre)
             pad.chgat(n, 0, span[n], pad.getbkgd() | att)
 
-        pad.refresh(y, 0, Y+4,X+4, rows - 5, cols - 6)
+        pad.refresh(y, 0, Y + 4, X + 4, rows - 5, cols - 6)
         key_toc = toc.getch()
 
     toc.clear()
@@ -496,8 +491,8 @@ def meta(stdscr, ebook):
 
     meta.box()
     meta.keypad(True)
-    meta.addstr(1,2, "Metadata")
-    meta.addstr(2,2, "--------")
+    meta.addstr(1, 2, "Metadata")
+    meta.addstr(2, 2, "--------")
     key_meta = 0
 
     mdata = []
@@ -508,7 +503,7 @@ def meta(stdscr, ebook):
     src_lines = mdata
     totlines = len(src_lines)
 
-    pad = curses.newpad(totlines, wi - 2 )
+    pad = curses.newpad(totlines, wi - 2)
     if COLORSUPPORT:
         pad.bkgd(stdscr.getbkgd())
 
@@ -517,14 +512,14 @@ def meta(stdscr, ebook):
         pad.addstr(n, 0, i)
     y = 0
     meta.refresh()
-    pad.refresh(y,0, Y+4,X+4, rows - 5, cols - 6)
+    pad.refresh(y, 0, Y + 4, X + 4, rows - 5, cols - 6)
 
     padhi = rows - 5 - Y - 4 + 1
 
-    while key_meta not in META|QUIT:
-        if key_meta in SCROLL_UP|SCROLL_UP_K and y > 0:
+    while key_meta not in META | QUIT:
+        if key_meta in SCROLL_UP | SCROLL_UP_K and y > 0:
             y -= 1
-        elif key_meta in SCROLL_DOWN|SCROLL_DOWN_J and y < totlines - hi + 6:
+        elif key_meta in SCROLL_DOWN | SCROLL_DOWN_J and y < totlines - hi + 6:
             y += 1
         elif key_meta in PAGE_UP:
             y = pgup(y, padhi)
@@ -534,9 +529,9 @@ def meta(stdscr, ebook):
             y = 0
         elif key_meta in CH_END:
             y = pgend(totlines, padhi)
-        elif key_meta in {curses.KEY_RESIZE}|HELP|TOC:
+        elif key_meta in {curses.KEY_RESIZE} | HELP | TOC:
             return key_meta
-        pad.refresh(y,0, 6,5, rows - 5, cols - 5)
+        pad.refresh(y, 0, 6, 5, rows - 5, cols - 5)
         key_meta = meta.getch()
 
     meta.clear()
@@ -554,15 +549,15 @@ def help(stdscr):
 
     help.box()
     help.keypad(True)
-    help.addstr(1,2, "Help")
-    help.addstr(2,2, "----")
+    help.addstr(1, 2, "Help")
+    help.addstr(2, 2, "----")
     key_help = 0
 
     src = re.search("Key Bind(\n|.)*", __doc__).group()
     src_lines = src.splitlines()
     totlines = len(src_lines)
 
-    pad = curses.newpad(totlines, wi - 2 )
+    pad = curses.newpad(totlines, wi - 2)
     if COLORSUPPORT:
         pad.bkgd(stdscr.getbkgd())
 
@@ -571,14 +566,14 @@ def help(stdscr):
         pad.addstr(n, 0, i)
     y = 0
     help.refresh()
-    pad.refresh(y,0, Y+4,X+4, rows - 5, cols - 6)
+    pad.refresh(y, 0, Y + 4, X + 4, rows - 5, cols - 6)
 
     padhi = rows - 5 - Y - 4 + 1
 
-    while key_help not in HELP|QUIT:
-        if key_help in SCROLL_UP|SCROLL_UP_K and y > 0:
+    while key_help not in HELP | QUIT:
+        if key_help in SCROLL_UP | SCROLL_UP_K and y > 0:
             y -= 1
-        elif key_help in SCROLL_DOWN|SCROLL_DOWN_J and y < totlines - hi + 6:
+        elif key_help in SCROLL_DOWN | SCROLL_DOWN_J and y < totlines - hi + 6:
             y += 1
         elif key_help in PAGE_UP:
             y = pgup(y, padhi)
@@ -588,9 +583,9 @@ def help(stdscr):
             y = 0
         elif key_help in CH_END:
             y = pgend(totlines, padhi)
-        elif key_help in {curses.KEY_RESIZE}|META|TOC:
+        elif key_help in {curses.KEY_RESIZE} | META | TOC:
             return key_help
-        pad.refresh(y,0, 6,5, rows - 5, cols - 5)
+        pad.refresh(y, 0, 6, 5, rows - 5, cols - 5)
         key_help = help.getch()
 
     help.clear()
@@ -603,26 +598,20 @@ def dots_path(curr, tofi):
     tofi = tofi.split("/")
     alld = tofi.count("..")
     t = len(candir)
-    candir = candir[0:t-alld-1]
+    candir = candir[0:t - alld - 1]
     try:
         while True:
             tofi.remove("..")
     except ValueError:
         pass
-    return "/".join(candir+tofi)
+    return "/".join(candir + tofi)
 
 
 def find_media_viewer():
     global VWR
     VWR_LIST = [
-        "feh",
-        "gio",
-        "sxiv",
-        "gnome-open",
-        "gvfs-open",
-        "xdg-open",
-        "kde-open",
-        "firefox"
+        "feh", "gio", "sxiv", "gnome-open", "gvfs-open", "xdg-open",
+        "kde-open", "firefox"
     ]
     if sys.platform == "win32":
         VWR = ["start"]
@@ -649,8 +638,7 @@ def open_media(scr, epub, src):
             VWR + [path],
             # shell=True,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
+            stderr=subprocess.DEVNULL)
         k = scr.getch()
     finally:
         os.remove(path)
@@ -663,7 +651,7 @@ def searching(stdscr, pad, src, width, y, ch, tot):
     x = (cols - width) // 2
 
     if SEARCHPATTERN is None:
-        stat = curses.newwin(1, cols, rows-1, 0)
+        stat = curses.newwin(1, cols, rows - 1, 0)
         if COLORSUPPORT:
             stat.bkgd(stdscr.getbkgd())
         stat.keypad(True)
@@ -686,7 +674,7 @@ def searching(stdscr, pad, src, width, y, ch, tot):
                 SEARCHPATTERN = None
                 return None, y
             elif ipt == 10:
-                SEARCHPATTERN = "/"+SEARCHPATTERN
+                SEARCHPATTERN = "/" + SEARCHPATTERN
                 stat.clear()
                 stat.refresh()
                 curses.echo(0)
@@ -709,9 +697,9 @@ def searching(stdscr, pad, src, width, y, ch, tot):
             stat.addstr(0, 0, " Regex:", curses.A_REVERSE)
             # stat.addstr(0, 7, SEARCHPATTERN)
             stat.addstr(
-                    0, 7,
-                    SEARCHPATTERN if 7+len(SEARCHPATTERN) < cols else "..."+SEARCHPATTERN[7-cols+4:]
-                    )
+                0, 7,
+                SEARCHPATTERN if 7 + len(SEARCHPATTERN) < cols else "..." +
+                SEARCHPATTERN[7 - cols + 4:])
             stat.refresh()
 
     if SEARCHPATTERN in {"?", "/"}:
@@ -722,7 +710,7 @@ def searching(stdscr, pad, src, width, y, ch, tot):
     try:
         pattern = re.compile(SEARCHPATTERN[1:], re.IGNORECASE)
     except re.error:
-        stdscr.addstr(rows-1, 0, "Invalid Regex!", curses.A_REVERSE)
+        stdscr.addstr(rows - 1, 0, "Invalid Regex!", curses.A_REVERSE)
         SEARCHPATTERN = None
         s = stdscr.getch()
         if s in QUIT:
@@ -748,16 +736,19 @@ def searching(stdscr, pad, src, width, y, ch, tot):
                     stdscr.refresh()
                     return None, y
                 elif s == ord("n") and ch == 0:
-                    SEARCHPATTERN = "/"+SEARCHPATTERN[1:]
+                    SEARCHPATTERN = "/" + SEARCHPATTERN[1:]
                     return None, 1
-                elif s == ord("N") and ch +1 == tot:
-                    SEARCHPATTERN = "?"+SEARCHPATTERN[1:]
+                elif s == ord("N") and ch + 1 == tot:
+                    SEARCHPATTERN = "?" + SEARCHPATTERN[1:]
                     return None, -1
 
                 stdscr.clear()
-                stdscr.addstr(rows-1, 0, " Finished searching: " + SEARCHPATTERN[1:cols-22] + " ", curses.A_REVERSE)
+                stdscr.addstr(
+                    rows - 1, 0,
+                    " Finished searching: " + SEARCHPATTERN[1:cols - 22] + " ",
+                    curses.A_REVERSE)
                 stdscr.refresh()
-                pad.refresh(y,0, 0,x, rows-2,x+width)
+                pad.refresh(y, 0, 0, x, rows - 2, x + width)
                 s = pad.getch()
 
     sidx = len(found) - 1
@@ -770,10 +761,9 @@ def searching(stdscr, pad, src, width, y, ch, tot):
                 break
 
     s = 0
-    msg = " Searching: " + SEARCHPATTERN[1:] + " --- Res {}/{} Ch {}/{} ".format(
-        sidx + 1,
-        len(found),
-        ch+1, tot)
+    msg = " Searching: " + SEARCHPATTERN[
+        1:] + " --- Res {}/{} Ch {}/{} ".format(sidx + 1, len(found), ch + 1,
+                                                tot)
     while True:
         if s in QUIT:
             SEARCHPATTERN = None
@@ -783,7 +773,7 @@ def searching(stdscr, pad, src, width, y, ch, tot):
             stdscr.refresh()
             return None, y
         elif s == ord("n"):
-            SEARCHPATTERN = "/"+SEARCHPATTERN[1:]
+            SEARCHPATTERN = "/" + SEARCHPATTERN[1:]
             if sidx == len(found) - 1:
                 if ch + 1 < tot:
                     return None, 1
@@ -793,12 +783,11 @@ def searching(stdscr, pad, src, width, y, ch, tot):
                     continue
             else:
                 sidx += 1
-                msg = " Searching: " + SEARCHPATTERN[1:] + " --- Res {}/{} Ch {}/{} ".format(
-                    sidx + 1,
-                    len(found),
-                    ch+1, tot)
+                msg = " Searching: " + SEARCHPATTERN[
+                    1:] + " --- Res {}/{} Ch {}/{} ".format(
+                        sidx + 1, len(found), ch + 1, tot)
         elif s == ord("N"):
-            SEARCHPATTERN = "?"+SEARCHPATTERN[1:]
+            SEARCHPATTERN = "?" + SEARCHPATTERN[1:]
             if sidx == 0:
                 if ch > 0:
                     return None, -1
@@ -808,14 +797,13 @@ def searching(stdscr, pad, src, width, y, ch, tot):
                     continue
             else:
                 sidx -= 1
-                msg = " Searching: " + SEARCHPATTERN[1:] + " --- Res {}/{} Ch {}/{} ".format(
-                    sidx + 1,
-                    len(found),
-                    ch+1, tot)
+                msg = " Searching: " + SEARCHPATTERN[
+                    1:] + " --- Res {}/{} Ch {}/{} ".format(
+                        sidx + 1, len(found), ch + 1, tot)
         elif s == curses.KEY_RESIZE:
             return s, None
 
-        while found[sidx][0] not in list(range(y, y+rows-1)):
+        while found[sidx][0] not in list(range(y, y + rows - 1)):
             if found[sidx][0] > y:
                 y += rows - 1
             else:
@@ -829,9 +817,9 @@ def searching(stdscr, pad, src, width, y, ch, tot):
             pad.chgat(i[0], i[1], i[2], pad.getbkgd() | attr)
 
         stdscr.clear()
-        stdscr.addstr(rows-1, 0, msg, curses.A_REVERSE)
+        stdscr.addstr(rows - 1, 0, msg, curses.A_REVERSE)
         stdscr.refresh()
-        pad.refresh(y,0, 0,x, rows-2,x+width)
+        pad.refresh(y, 0, 0, x, rows - 2, x + width)
         s = pad.getch()
 
 
@@ -859,11 +847,11 @@ def reader(stdscr, ebook, index, width, y, pctg):
     if y < 0 and totlines <= rows:
         y = 0
     elif pctg is not None:
-        y = round(pctg*totlines)
+        y = round(pctg * totlines)
     else:
         y = y % totlines
 
-    pad = curses.newpad(totlines, width + 2) # + 2 unnecessary
+    pad = curses.newpad(totlines, width + 2)  # + 2 unnecessary
 
     if COLORSUPPORT:
         pad.bkgd(stdscr.getbkgd())
@@ -871,7 +859,7 @@ def reader(stdscr, ebook, index, width, y, pctg):
     pad.keypad(True)
     for n, i in enumerate(src_lines):
         if re.search(r"\[IMG:[0-9]+\]", i):
-            pad.addstr(n, width//2 - len(i)//2, i, curses.A_REVERSE)
+            pad.addstr(n, width // 2 - len(i) // 2, i, curses.A_REVERSE)
         else:
             pad.addstr(n, 0, i)
     if index == 0:
@@ -882,7 +870,7 @@ def reader(stdscr, ebook, index, width, y, pctg):
         suff = " <-- End --> "
     # try except to be more flexible on terminal resize
     try:
-        pad.addstr(n, width//2 - 7, suff, curses.A_REVERSE)
+        pad.addstr(n, width // 2 - 7, suff, curses.A_REVERSE)
     except curses.error:
         pass
 
@@ -890,7 +878,7 @@ def reader(stdscr, ebook, index, width, y, pctg):
     stdscr.refresh()
     # try except to be more flexible on terminal resize
     try:
-        pad.refresh(y,0, 0,x, rows-1,x+width)
+        pad.refresh(y, 0, 0, x, rows - 1, x + width)
     except curses.error:
         pass
 
@@ -901,14 +889,14 @@ def reader(stdscr, ebook, index, width, y, pctg):
             count = 1
         else:
             count = int(countstring)
-        if k in range(48, 58): # i.e., k is a numeral
+        if k in range(48, 58):  # i.e., k is a numeral
             countstring = countstring + chr(k)
         else:
             if k in QUIT:
                 if k == 27 and countstring != "":
                     countstring = ""
                 else:
-                    savestate(ebook.path, index, width, y, y/totlines)
+                    savestate(ebook.path, index, width, y, y / totlines)
                     sys.exit()
             elif k in SCROLL_UP:
                 if count > 1:
@@ -934,7 +922,7 @@ def reader(stdscr, ebook, index, width, y, pctg):
                     svline = y + rows - 1
                 if y + count <= totlines - rows:
                     y += count
-                elif y == totlines - rows and index != len(contents)-1:
+                elif y == totlines - rows and index != len(contents) - 1:
                     return 1, width, 0, None
                 else:
                     y = totlines - rows
@@ -947,14 +935,14 @@ def reader(stdscr, ebook, index, width, y, pctg):
                 if totlines - y - LINEPRSRV > rows:
                     # y = pgdn(y, totlines, rows, LINEPRSRV, count)
                     y += rows - LINEPRSRV
-                elif index != len(contents)-1:
+                elif index != len(contents) - 1:
                     return 1, width, 0, None
             elif k in HALF_UP:
-                countstring = str(rows//2)
+                countstring = str(rows // 2)
                 k = list(SCROLL_UP)[0]
                 continue
             elif k in HALF_DOWN:
-                countstring = str(rows//2)
+                countstring = str(rows // 2)
                 k = list(SCROLL_DOWN)[0]
                 continue
             elif k in CH_NEXT:
@@ -964,9 +952,9 @@ def reader(stdscr, ebook, index, width, y, pctg):
                     return len(contents) - index - 1, width, 0, None
             elif k in CH_PREV:
                 if index - count > 0:
-                   return -count, width, 0, None
+                    return -count, width, 0, None
                 elif index - count <= 0:
-                   return -index, width, 0, None
+                    return -index, width, 0, None
             elif k in CH_HOME:
                 y = 0
             elif k in CH_END:
@@ -974,47 +962,48 @@ def reader(stdscr, ebook, index, width, y, pctg):
             elif k in TOC:
                 fllwd = toc(stdscr, toc_src, index)
                 if fllwd is not None:
-                    if fllwd in {curses.KEY_RESIZE}|HELP|META:
+                    if fllwd in {curses.KEY_RESIZE} | HELP | META:
                         k = fllwd
                         continue
                     return fllwd - index, width, 0, None
             elif k in META:
                 k = meta(stdscr, ebook)
-                if k in {curses.KEY_RESIZE}|HELP|TOC:
+                if k in {curses.KEY_RESIZE} | HELP | TOC:
                     continue
             elif k in HELP:
                 k = help(stdscr)
-                if k in {curses.KEY_RESIZE}|META|TOC:
+                if k in {curses.KEY_RESIZE} | META | TOC:
                     continue
             elif k == WIDEN and (width + count) < cols - 4:
                 width += count
-                return 0, width, 0, y/totlines
+                return 0, width, 0, y / totlines
             elif k == SHRINK:
                 width -= count
                 if width < 20:
                     width = 20
-                return 0, width, 0, y/totlines
+                return 0, width, 0, y / totlines
             elif k == WIDTH:
                 if countstring == "":
                     # if called without a count, toggle between 80 cols and full width
                     if width != 80 and cols - 4 >= 80:
-                        return 0, 80, 0, y/totlines
+                        return 0, 80, 0, y / totlines
                     else:
-                        return 0, cols - 4, 0, y/totlines
+                        return 0, cols - 4, 0, y / totlines
                 else:
                     width = count
                 if width < 20:
                     width = 20
                 elif width >= cols - 4:
                     width = cols - 4
-                return 0, width, 0, y/totlines
+                return 0, width, 0, y / totlines
             # elif k == ord("0"):
             #     if width != 80 and cols - 2 >= 80:
             #         return 0, 80, 0, y/totlines
             #     else:
             #         return 0, cols - 2, 0, y/totlines
             elif k == ord("/"):
-                ks, idxs = searching(stdscr, pad, src_lines, width, y, index, len(contents))
+                ks, idxs = searching(stdscr, pad, src_lines, width, y, index,
+                                     len(contents))
                 if ks in {curses.KEY_RESIZE, ord("/")}:
                     k = ks
                     continue
@@ -1024,7 +1013,7 @@ def reader(stdscr, ebook, index, width, y, pctg):
                     y = idxs
             elif k == ord("o") and VWR is not None:
                 gambar, idx = [], []
-                for n, i in enumerate(src_lines[y:y+rows]):
+                for n, i in enumerate(src_lines[y:y + rows]):
                     img = re.search(r"(?<=\[IMG:)[0-9]+(?=\])", i)
                     if img is not None:
                         gambar.append(img.group())
@@ -1036,7 +1025,8 @@ def reader(stdscr, ebook, index, width, y, pctg):
                 elif len(gambar) > 1:
                     p, i = 0, 0
                     while p not in QUIT and p not in FOLLOW:
-                        stdscr.move(idx[i], x + width//2 + len(gambar[i]) + 1)
+                        stdscr.move(idx[i],
+                                    x + width // 2 + len(gambar[i]) + 1)
                         stdscr.refresh()
                         curses.curs_set(1)
                         p = pad.getch()
@@ -1057,31 +1047,34 @@ def reader(stdscr, ebook, index, width, y, pctg):
             elif k == MARKPOS:
                 jumnum = pad.getch()
                 if jumnum in range(49, 58):
-                    JUMPLIST[chr(jumnum)] = [index, width, y, y/totlines]
+                    JUMPLIST[chr(jumnum)] = [index, width, y, y / totlines]
                 else:
                     k = jumnum
                     continue
             elif k == JUMPTOPOS:
                 jumnum = pad.getch()
                 if jumnum in range(49, 58) and chr(jumnum) in JUMPLIST.keys():
-                    tojumpidxdiff = JUMPLIST[chr(jumnum)][0]-index
+                    tojumpidxdiff = JUMPLIST[chr(jumnum)][0] - index
                     tojumpy = JUMPLIST[chr(jumnum)][2]
-                    tojumpctg = None if JUMPLIST[chr(jumnum)][1] == width else JUMPLIST[chr(jumnum)][3]
+                    tojumpctg = None if JUMPLIST[chr(
+                        jumnum)][1] == width else JUMPLIST[chr(jumnum)][3]
                     return tojumpidxdiff, width, tojumpy, tojumpctg
                 else:
                     k = jumnum
                     continue
-            elif k == COLORSWITCH and COLORSUPPORT and countstring in {"", "0", "1", "2"}:
+            elif k == COLORSWITCH and COLORSUPPORT and countstring in {
+                    "", "0", "1", "2"
+            }:
                 if countstring == "":
                     count_color = curses.pair_number(stdscr.getbkgd())
                     if count_color not in {2, 3}: count_color = 1
                     count_color = count_color % 3
                 else:
                     count_color = count
-                stdscr.bkgd(curses.color_pair(count_color+1))
+                stdscr.bkgd(curses.color_pair(count_color + 1))
                 return 0, width, y, None
             elif k == curses.KEY_RESIZE:
-                savestate(ebook.path, index, width, y, y/totlines)
+                savestate(ebook.path, index, width, y, y / totlines)
                 # stated in pypi windows-curses page:
                 # to call resize_term right after KEY_RESIZE
                 if sys.platform == "win32":
@@ -1091,9 +1084,10 @@ def reader(stdscr, ebook, index, width, y, pctg):
                     rows, cols = stdscr.getmaxyx()
                     curses.resize_term(rows, cols)
                 if cols < 22 or rows < 12:
-                    sys.exit("ERR: Screen was too small (min 22cols x 12rows).")
+                    sys.exit(
+                        "ERR: Screen was too small (min 22cols x 12rows).")
                 if cols <= width + 4:
-                    return 0, cols - 4, 0, y/totlines
+                    return 0, cols - 4, 0, y / totlines
                 else:
                     return 0, width, y, None
             countstring = ""
@@ -1105,9 +1099,9 @@ def reader(stdscr, ebook, index, width, y, pctg):
             stdscr.addstr(0, 0, countstring)
             stdscr.refresh()
             if totlines - y < rows:
-                pad.refresh(y,0, 0,x, totlines-y,x+width)
+                pad.refresh(y, 0, 0, x, totlines - y, x + width)
             else:
-                pad.refresh(y,0, 0,x, rows-1,x+width)
+                pad.refresh(y, 0, 0, x, rows - 1, x + width)
         except curses.error:
             pass
         k = pad.getch()
@@ -1127,13 +1121,13 @@ def preread(stdscr, file):
         curses.init_pair(3, LIGHT[0], LIGHT[1])
         COLORSUPPORT = True
     except:
-        COLORSUPPORT  = False
+        COLORSUPPORT = False
 
     stdscr.keypad(True)
     curses.curs_set(0)
     stdscr.clear()
     rows, cols = stdscr.getmaxyx()
-    stdscr.addstr(rows-1,0, "Loading...")
+    stdscr.addstr(rows - 1, 0, "Loading...")
     stdscr.refresh()
 
     epub = Epub(file)
@@ -1219,7 +1213,10 @@ def main():
             if not os.path.exists(i):
                 todel.append(i)
             else:
-                match_val = sum([j.size for j in SM(None, i.lower(), " ".join(args).lower()).get_matching_blocks()])
+                match_val = sum([
+                    j.size for j in SM(None, i.lower(), " ".join(
+                        args).lower()).get_matching_blocks()
+                ])
                 if match_val >= val:
                     val = match_val
                     cand = i
@@ -1229,7 +1226,7 @@ def main():
             json.dump(STATE, f, indent=4)
         if len(args) == 1 and re.match(r"[0-9]+", args[0]) is not None:
             try:
-                cand = list(STATE.keys())[int(args[0])-1]
+                cand = list(STATE.keys())[int(args[0]) - 1]
                 val = 1
             except IndexError:
                 val = 0
@@ -1237,9 +1234,11 @@ def main():
             file = cand
         else:
             print("Reading history:")
-            dig = len(str(len(STATE.keys())+1))
+            dig = len(str(len(STATE.keys()) + 1))
             for n, i in enumerate(STATE.keys()):
-                print(str(n+1).rjust(dig) + ("* " if STATE[i]["lastread"] == "1" else "  ") + i)
+                print(
+                    str(n + 1).rjust(dig) +
+                    ("* " if STATE[i]["lastread"] == "1" else "  ") + i)
             if len({"-r"} & set(args)) != 0:
                 sys.exit()
             else:
@@ -1261,7 +1260,7 @@ def main():
             src_lines, _ = parser.get_lines()
             # sys.stdout.reconfigure(encoding="utf-8")  # Python>=3.7
             for j in src_lines:
-                sys.stdout.buffer.write((j+"\n\n").encode("utf-8"))
+                sys.stdout.buffer.write((j + "\n\n").encode("utf-8"))
         sys.exit()
 
     else:
