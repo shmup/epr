@@ -1258,7 +1258,7 @@ def main():
                 parser.close()
             except:
                 pass
-            src_lines = parser.get_lines()
+            src_lines, _ = parser.get_lines()
             # sys.stdout.reconfigure(encoding="utf-8")  # Python>=3.7
             for j in src_lines:
                 sys.stdout.buffer.write((j+"\n\n").encode("utf-8"))
