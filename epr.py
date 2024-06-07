@@ -857,6 +857,8 @@ def reader(stdscr, ebook, index, width, y, pctg):
         pad.bkgd(stdscr.getbkgd())
 
     pad.keypad(True)
+
+    n = -1 # initialize
     for n, i in enumerate(src_lines):
         if re.search(r"\[IMG:[0-9]+\]", i):
             pad.addstr(n, width // 2 - len(i) // 2, i, curses.A_REVERSE)
